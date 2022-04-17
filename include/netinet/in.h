@@ -16,7 +16,7 @@
 #include_next <netinet/in.h>
 #endif
 
-#define IP_ADD_SOURCE_MEMBERSHIP  39 
+#define IP_ADD_SOURCE_MEMBERSHIP  39
 #define IP_DROP_SOURCE_MEMBERSHIP 40
 
 #define MCAST_JOIN_GROUP   42
@@ -178,6 +178,10 @@ struct ip6_mtuinfo {
 	struct sockaddr_in6 ip6m_addr;
 	uint32_t ip6m_mtu;
 };
+#endif
+
+#ifndef IPPORT_RESERVED
+# define IPPORT_RESERVED 1024
 #endif
 
 #endif /* _NETINET_IN_H_ */

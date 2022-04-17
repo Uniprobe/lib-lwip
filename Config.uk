@@ -166,12 +166,13 @@ config LWIP_IP_REASS_MAX_PBUFS
 
 endmenu
 
+menuconfig LWIP_RAW
+	bool "RAW support"
+	default n
+
 config LWIP_UDP
 	bool "UDP support"
 	default y
-
-menuconfig LWIP_RAW
-	bool "RAW support"
 
 config LWIP_SO_RCVBUF
 	bool "SO_RCVBUF flag support"
