@@ -172,6 +172,9 @@ config LWIP_UDP
 
 menuconfig LWIP_RAW
 	bool "RAW support"
+
+config LWIP_SO_RCVBUF
+	bool "SO_RCVBUF flag support"
 	default n
 
 menuconfig LWIP_TCP

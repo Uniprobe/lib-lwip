@@ -139,6 +139,15 @@ void sys_free(void *ptr);
 #endif
 
 /**
+ * SO_RCVBUF
+ */
+#ifdef CONFIG_LWIP_SO_RCVBUF
+#define LWIP_SO_RCVBUF 1
+#else
+#define LWIP_SO_RCVBUF 0
+#endif
+
+/**
  * TCP options
  */
 #if CONFIG_LWIP_TCP
