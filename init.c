@@ -138,6 +138,7 @@ static int liblwip_init(void)
 	const char  __maybe_unused *strcfg;
 	uint16_t  __maybe_unused int16cfg;
 	int is_first_nf;
+	int ret;
 #if LWIP_IPV4
 	ip4_addr_t ip4;
 	ip4_addr_t *ip4_arg;
@@ -174,11 +175,24 @@ static int liblwip_init(void)
 		dev = uk_netdev_get(devid);
 		if (!dev)
 			continue;
-		if (uk_netdev_state_get(dev) != UK_NETDEV_UNCONFIGURED) {
+		if (uk_netdev_state_get(dev) != UK_NETDEV_UNCONFIGURED
+		    && uk_netdev_state_get(dev) != UK_NETDEV_UNPROBED) {
 			uk_pr_info("Skipping to add network device %u to lwIP: Not in unconfigured state\n",
 				    devid);
 			continue;
 		}
+
+		if (uk_netdev_state_get(dev) == UK_NETDEV_UNPROBED) {
+			ret = uk_netdev_probe(dev);
+			if (ret < 0) {
+				uk_pr_err("Failed to probe features of network device %u: %d; skipping device...\n",
+					  devid, ret);
+				continue;
+			}
+		}
+
+		/* Here, the device has to be in unconfigured state */
+		UK_ASSERT(uk_netdev_state_get(dev) == UK_NETDEV_UNCONFIGURED);
 
 		uk_pr_info("Attach network device %u to lwIP...\n",
 			   devid);
@@ -238,6 +252,54 @@ no_conf:
 				  devid);
 			continue;
 		}
+
+		/* Print hardware address */
+		if (nf->hwaddr_len == 6) {
+			uk_pr_info("%c%c%u: Hardware address: %02"PRIx8":%02"PRIx8":%02"PRIx8":%02"PRIx8":%02"PRIx8":%02"PRIx8"\n",
+				   nf->name[0], nf->name[1], nf->num,
+				   nf->hwaddr[0], nf->hwaddr[1], nf->hwaddr[2],
+				   nf->hwaddr[3], nf->hwaddr[4], nf->hwaddr[5]);
+		}
+
+#if LWIP_CHECKSUM_CTRL_PER_NETIF
+		uk_pr_info("%c%c%u: Check checksums:",
+			   nf->name[0], nf->name[1], nf->num);
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_CHECK_IP) {
+			uk_pr_info(" IP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_CHECK_UDP) {
+			uk_pr_info(" UDP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_CHECK_TCP) {
+			uk_pr_info(" TCP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_CHECK_ICMP) {
+			uk_pr_info(" ICMP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_CHECK_ICMP6) {
+			uk_pr_info(" ICMP6");
+		}
+		uk_pr_info("\n");
+
+		uk_pr_info("%c%c%u: Generate checksums:",
+			   nf->name[0], nf->name[1], nf->num);
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_GEN_IP) {
+			uk_pr_info(" IP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_GEN_UDP) {
+			uk_pr_info(" UDP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_GEN_TCP) {
+			uk_pr_info(" TCP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_GEN_ICMP) {
+			uk_pr_info(" ICMP");
+		}
+		IF__NETIF_CHECKSUM_ENABLED(nf, NETIF_CHECKSUM_GEN_ICMP6) {
+			uk_pr_info(" ICMP6");
+		}
+		uk_pr_info("\n");
+#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
 
 		/* Declare the first network device as default interface */
 		if (is_first_nf) {
